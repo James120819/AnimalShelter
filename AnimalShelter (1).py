@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+import re 
+
 
 class AnimalShelter:
     def __init__(self, username, password):
@@ -81,3 +83,36 @@ class AnimalShelter:
     def _coerce_projection(self, projection):
         """Default projection hides _id unless caller overrides."""
         return projection if isinstance(projection, dict) else {"_id": False}
+
+
+   def build_query(animal_type=None, breed=None, sex=None,
+                min_age_weeks=None, max_age_weeks=None,
+                outcome=None):
+    q = {}
+
+   
+    if animal_type:
+        q["animal_type"] = animal_type
+
+  
+    if breed:
+        q["breed"] = {"$regex": re.escape(breed), "$options": "i"}
+
+   
+    if sex:
+        q["sex_upon_outcome"] = {"$regex": re.escape(sex), "$options": "i"}
+
+   
+    age_range = {}
+    if min_age_weeks is not None:
+        age_range["$gte"] = float(min_age_weeks)
+    if max_age_weeks is not None:
+        age_range["$lte"] = float(max_age_weeks)
+    if age_range:
+        q["age_upon_outcome_in_weeks"] = age_range
+
+    
+    if outcome:
+        q["outcome_type"] = {"$regex": re.escape(outcome), "$options": "i"}
+
+    return q
