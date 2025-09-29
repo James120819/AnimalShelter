@@ -131,11 +131,31 @@ app.layout = html.Div([
 @app.callback(Output('datatable-id','data'),
               [Input('filter-type', 'value')])
 def update_dashboard(filter_type):
-    if filter_type == "Reset" or filter_type is None:
-        dff = df
-    else:
-        dff = df[df['breed'].str.contains(filter_type, case=False, na=False)]
-    return dff.to_dict('records')
+    breed_text = (filter_type or "").strip()
+
+    query = build_query(breed=breed_text) if breed_text else {}
+
+    projection = {
+        "_id": False,
+        "animal_id": True,
+        "name": True,
+        "animal_type": True,
+        "breed": True,
+        "sex_upon_outcome": True,
+        "age_upon_outcome_in_weeks": True,
+        "outcome_type": True,
+        "location_lat": True,
+        "location_long": True,
+    }
+
+    records = shelter.read(
+        query,
+        projection=projection,
+        sort=[("age_upon_outcome_in_weeks", 1)],
+        limit=500,
+    )
+
+    return records
 
 # Display the breeds of animal based on quantity represented in
 # the data table
